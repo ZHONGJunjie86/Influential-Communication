@@ -21,10 +21,10 @@ class Shared_Data(): #nn.Module
     
     def send(self, loss_dict_agent, loss_dict_adversary, send_process_data_dict):
         self._reset()
-        self.a_loss_agent = loss_dict_agent['a_loss']
-        self.c_loss_agent = loss_dict_agent['c_loss']
-        self.a_loss_adversary = loss_dict_adversary['a_loss']
-        self.c_loss_adversary = loss_dict_adversary['c_loss']
+        self.a_loss_agent.value = loss_dict_agent['a_loss']
+        self.c_loss_agent.value = loss_dict_agent['c_loss']
+        self.a_loss_adversary.value = loss_dict_adversary['a_loss']
+        self.c_loss_adversary.value = loss_dict_adversary['c_loss']
 
         for i in range(self.process_num):
             self.adversaries_all_reward.append(send_process_data_dict[i]["adversaries all reward"])
