@@ -1,14 +1,14 @@
-# import wandb
+import wandb
 
 def process_run(rank, shared_data):
-    # wandb.init(
-    # project="Bi-Level-Actor-Critic-with-F", 
-    # entity="zhongjunjie",
-    # group="SEPPO 66"
-    # )
-    # wandb.config = {
-    # "learning_rate": 0.0003,
-    # }  
+    wandb.init(
+    project="Bi-Level-Actor-Critic-with-F", 
+    entity="zhongjunjie",
+    group="IC 1"
+    )
+    wandb.config = {
+    "learning_rate": 0.0003,
+    }  
     
     shared_data.event.wait()
     while True:
@@ -26,8 +26,8 @@ def process_run(rank, shared_data):
         send_dict["relative_reward"] = shared_data.relative_reward[rank-1]
         shared_data.shared_lock.release()
 
-        # wandb.log(send_dict)
-        print(send_dict)
+        wandb.log(send_dict)
+        # print(send_dict)
         shared_data.event.wait()
         
 

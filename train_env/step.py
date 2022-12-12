@@ -23,6 +23,7 @@ def step(rank, shared_data):
     send_process_data_dict = {i:{"a_loss":0.0, "c_loss":0.0} for i in range(args.processes)}
     RENDER = False # True
     episode = 0    
+    lr = args.a_lr
 
     while episode < args.max_episodes:
         print("-----------------Episode: ", episode)
@@ -132,10 +133,15 @@ def step(rank, shared_data):
         loss_dict_adversary = adversary_target.train_with_shared_data(agents_net["adversary"], agents_optimizer["adversary"])
         shared_data.send(loss_dict_agent, loss_dict_adversary, send_process_data_dict)
 
-        print("Episode ", episode, " over ")
+        print("Episode ", episode, " over. lr: ", lr)
         if episode % 10 == 0:
             agent_target.save_model(model_save_path, agents_net["agent"])
             adversary_target.save_model(model_save_path, agents_net["adversary"])
+            if episode!= 0 and episode % 10 == 0 and lr>args.min_lr:
+                lr = max(lr  * args.lr_decay, args.min_lr)
+                agents_optimizer = {name: torch.optim.Adam(agents_net[name].parameters(),
+                                               lr=lr) for name in agents_net}
+                
         episode += 1
 
 

@@ -36,7 +36,7 @@ parser.add_argument("--K_epochs", default=4, type=int)
 parser.add_argument("--clip", default=0.2, type=float)
 
 # Multiprocessing
-parser.add_argument('--processes', default=2, type=int,
+parser.add_argument('--processes', default=4, type=int,
                     help='number of processes to train with')
                                 
 args = parser.parse_args()
@@ -54,13 +54,13 @@ obs_shape_by_type = {"agent": 4 + 2 * args.num_obstacles + 2* (args.num_good + a
 
 
 # 定义保存路径
-path = "/home/j-zhong/work_place/Bi-Level-Actor-Critic-with-F/model/model1/"#
+path = "/home/j-zhong/work_place/Influential-Communication/model/model1"
 model_load_path = {"agent": path, 
                    "adversary":path}
 model_save_path = {"agent": path, 
                    "adversary":path}
 
-device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu") 
+device = torch.device("cpu")  # torch.device("cuda:0") if torch.cuda.is_available() else 
 
 
 
