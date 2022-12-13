@@ -231,7 +231,7 @@ class PPO():
             GAE_advantage.append( advatage) #插入列表
             target_value.append(float(value) + advatage)#)
             action_value_pre = reward + self.gamma*value_pre
-            value_pre = value # !
+            # value_pre = value # !
         
         # Normalizing the rewards:
         rewards = torch.tensor(rewards[::-1]).to(self.device).view(-1,1,1)
@@ -305,7 +305,7 @@ class PPO():
                 c_loss_com = torch.nn.SmoothL1Loss()(target_value_com, value_com) 
                 critic_loss = torch.nn.SmoothL1Loss()(value, target_value) + c_loss_com
                 entropy = entropy + entropy_com
-                actor_loss = -surr3.mean() + surr3_com.mean() - self.entropy_coef * entropy + 0.5 * critic_loss
+                actor_loss = -surr3.mean() - surr3_com.mean() - self.entropy_coef * entropy + 0.5 * critic_loss
             else:
                 c_loss_com = 0
                 surr3_com = 0
