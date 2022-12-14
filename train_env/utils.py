@@ -1,7 +1,10 @@
 import math
 import torch
+import torch.nn as nn
 min_dis = 0.8 # max_all_adv_reward = 0.15
 max_reward = 0.02
+
+kl_loss = nn.KLDivLoss(reduction="batchmean")
 
 def compute_dis(my_pos, other_pos):
     return other_pos[0]**2 + other_pos[1]**2# (my_pos[0] - other_pos[0])**2 + (my_pos[1] - other_pos[1])**2
@@ -113,17 +116,32 @@ def collect_data(target, source, agent_type):
         target.old_com = torch.cat((target.old_com, source.old_com), dim = 0) 
 
 
-def compute_com_reward(agent_name_list, agent_kl_dict, beta):
+def compute_com_reward(agent_name_list, agent_kl_dict, beta, com_dim):
     com_reward_dict = {}
     for i, agent_name in enumerate(agent_name_list):
         if "agent" in agent_name:
             continue
         influence_reward = 0
+        
         for other_name in agent_name_list:
             if agent_name == other_name or "agent" in other_name:
                 continue
-            influence_reward += beta * agent_kl_dict[other_name][i]
+            
+            other_real_logits = agent_kl_dict[other_name]["real_logits"].reshape(1, com_dim, 1)
+            # p(j) * p(j|k)
+            union_p = other_real_logits * agent_kl_dict[other_name][i]
+            # sum_k p(j)
+            sum_p = union_p.sum(dim=1,keepdim=True)
+            # kl
+            kl_reward = kl_loss(sum_p, agent_kl_dict[other_name]["real_logits"])
+            influence_reward += beta * kl_reward
         com_reward_dict[agent_name] = influence_reward
+    
+    
+    # if old_actions_com == None:
+    #     for key, dis in kl_dict.items():
+    #         kl_dict[key] = float(self.kl_loss(dis.reshape(batch_size, 1, self.action_dim_com), 
+    #                                     logits.reshape(batch_size, 1, self.action_dim_com)).detach().cpu().numpy())
     
     return com_reward_dict
         

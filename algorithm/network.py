@@ -17,6 +17,7 @@ class ActorCritic(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
         self.hidden_size = 64
         self.com_dim = com_dim
+        self.all_action_com = torch.Tensor([i for i in range(com_dim)]).reshape(1,com_dim,1).to(self.device)
         self.agent_type = agent_type
         self.device = device
 
@@ -90,10 +91,12 @@ class ActorCritic(nn.Module):
                     com = copy.deepcopy(obs_com)
                     com[i] = -1
                     com = torch.Tensor(com).to(self.device)
-                    x_com = F.relu(self.linear_com(com + 1))
-                    x_com = torch.cat([x.view(batch_size, 1, -1), 
-                                      x_com.reshape(batch_size, 1, 30)   
-                                      ], -1).view(batch_size, 1, -1)
+                    com = com.repeat(1,self.com_dim,1)
+                    x_com = com[:,:,:i] + self.all_action_com + com[:,:,i+1:]
+                    x_com = F.relu(self.linear_com(com/10))
+                    x_com = torch.cat([x.view(batch_size, 1, -1).repeat(1,self.com_dim,1), 
+                                      x_com.reshape(batch_size, self.com_dim, 30)   
+                                      ], -1).view(batch_size, self.com_dim, -1)
                     x_com = F.relu(self.linear_2(x_com))
                     logits = self.softmax(self.linear_actor_com(x_com))
                     kl_dict[i] = logits
@@ -103,7 +106,7 @@ class ActorCritic(nn.Module):
             if old_actions_com == None:
                 obs_com = torch.Tensor(obs_com).to(self.device)
             obs_com = obs_com.view(batch_size, 1, self.com_dim)
-            x_com = F.relu(self.linear_com(obs_com + 1))
+            x_com = F.relu(self.linear_com(obs_com/10))
             x = torch.cat([x.view(batch_size, 1, -1), 
                            x_com.reshape(batch_size, 1, 30)    
                             ], -1).view(batch_size, 1, -1)
@@ -120,11 +123,7 @@ class ActorCritic(nn.Module):
             # critic
             value_com = self.linear_critic_com(x)
 
-            if old_actions_com == None:
-                for key, dis in kl_dict.items():
-                    kl_dict[key] = float(self.kl_loss(dis.reshape(batch_size, 1, self.action_dim_com), 
-                                                logits.reshape(batch_size, 1, self.action_dim_com)).detach().cpu().numpy())
-            
+            kl_dict["real_logits"] = logits            
 
             return value.reshape(batch_size,1,1), action,selected_log_prob, value_com.reshape(batch_size,1,1), action_com,\
                 selected_log_prob_com , h_state.detach().data, entropy, entropy_com, kl_dict

@@ -27,6 +27,8 @@ parser.add_argument("--max_episodes", default=10000000, type=int)
 # experiment
 parser.add_argument("--alpha", default=0.0, type=float)
 parser.add_argument("--beta", default=0.146, type=float)
+parser.add_argument("--com_dim", default=9, type=int)
+
 
 # PPO
 parser.add_argument("--load_model", action='store_true')  # 加是true；不加为false

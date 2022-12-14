@@ -13,7 +13,7 @@ def step(rank, shared_data):
         process_run(rank, shared_data)
     # initialize
     agents_net = {"agent": ActorCritic("agent", obs_shape_by_type["agent"], 5, device).to(device), 
-                  "adversary":ActorCritic("adversary", obs_shape_by_type["adversary"], 5, device, 9, args.num_adversaries).to(device)}
+                  "adversary":ActorCritic("adversary", obs_shape_by_type["adversary"], 5, device, args.com_dim, args.num_adversaries).to(device)}
     agents_optimizer = {name: torch.optim.Adam(agents_net[name].parameters(),
                                                lr=args.a_lr) for name in agents_net}
     agents_process_dict = {}
@@ -86,7 +86,7 @@ def step(rank, shared_data):
                         agent_com_dict[agent_name] = action_com
                     actions[agent_name] = action
 
-                com_reward_dict = compute_com_reward(agent_name_list, agent_kl_dict, args.beta)
+                com_reward_dict = compute_com_reward(agent_name_list, agent_kl_dict, args.beta, args.com_dim)
                 states, rewards, dones, infos = env.step(actions)
                 step += 1
 
