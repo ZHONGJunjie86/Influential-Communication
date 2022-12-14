@@ -17,9 +17,12 @@ class ActorCritic(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
         self.hidden_size = 64
         self.com_dim = com_dim
-        self.all_action_com = torch.Tensor([i for i in range(com_dim)]).reshape(1,com_dim,1).to(self.device)
         self.agent_type = agent_type
         self.device = device
+        if self.agent_type != "agent":
+            self.all_action_com = torch.Tensor([i for i in range(self.action_dim_com)]
+                                 ).reshape(1,self.action_dim_com,1).to(self.device)
+
 
         # 
         self.linear1 = nn.Linear(obs_size, 64)
@@ -89,14 +92,13 @@ class ActorCritic(nn.Module):
                 # obs_com: list
                 for i in range(len(obs_com)):
                     com = copy.deepcopy(obs_com)
-                    com[i] = -1
-                    com = torch.Tensor(com).to(self.device)
-                    com = com.repeat(1,self.com_dim,1)
-                    x_com = com[:,:,:i] + self.all_action_com + com[:,:,i+1:]
-                    x_com = F.relu(self.linear_com(com/10))
-                    x_com = torch.cat([x.view(batch_size, 1, -1).repeat(1,self.com_dim,1), 
-                                      x_com.reshape(batch_size, self.com_dim, 30)   
-                                      ], -1).view(batch_size, self.com_dim, -1)
+                    com = torch.Tensor(com).reshape(1,1,self.com_dim).to(self.device)
+                    com = com.repeat(1,self.action_dim_com,1)
+                    x_com = torch.cat([com[:,:,:i], self.all_action_com, com[:,:,i+1:]],2)
+                    x_com = F.relu(self.linear_com(x_com/10))
+                    x_com = torch.cat([x.view(batch_size, 1, -1).repeat(1,self.action_dim_com,1), 
+                                      x_com.reshape(batch_size, self.action_dim_com, 30)   
+                                      ], -1).view(batch_size, self.action_dim_com, -1)
                     x_com = F.relu(self.linear_2(x_com))
                     logits = self.softmax(self.linear_actor_com(x_com))
                     kl_dict[i] = logits

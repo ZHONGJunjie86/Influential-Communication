@@ -48,7 +48,7 @@ def step(rank, shared_data):
             for name in agent_name_list:
                 if "agent" in name:
                     continue
-                agent_com_dict[name] = -1 # + 1 in net
+                agent_com_dict[name] = -1
                 agent_kl_dict[name] = {} 
                 com_reward_dict[name] = 0
             step = 0

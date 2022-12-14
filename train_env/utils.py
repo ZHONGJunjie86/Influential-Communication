@@ -129,7 +129,7 @@ def compute_com_reward(agent_name_list, agent_kl_dict, beta, com_dim):
             
             other_real_logits = agent_kl_dict[other_name]["real_logits"].reshape(1, com_dim, 1)
             # p(j) * p(j|k)
-            union_p = other_real_logits * agent_kl_dict[other_name][i]
+            union_p = other_real_logits * agent_kl_dict[other_name][i].reshape(1, com_dim, com_dim)
             # sum_k p(j)
             sum_p = union_p.sum(dim=1,keepdim=True)
             # kl
