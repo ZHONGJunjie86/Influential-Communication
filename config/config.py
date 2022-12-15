@@ -25,7 +25,7 @@ parser.add_argument("--max_cycles", default=150, type=int)  # Agent Environment 
 parser.add_argument("--max_episodes", default=10000000, type=int)
 
 # experiment
-parser.add_argument("--alpha", default=0.0, type=float)
+parser.add_argument("--alpha", default=1.0, type=float)
 parser.add_argument("--beta", default=0.146, type=float)
 parser.add_argument("--com_dim", default=9, type=int)
 
@@ -38,7 +38,7 @@ parser.add_argument("--K_epochs", default=4, type=int)
 parser.add_argument("--clip", default=0.2, type=float)
 
 # Multiprocessing
-parser.add_argument('--processes', default=6, type=int,
+parser.add_argument('--processes', default=14, type=int,
                     help='number of processes to train with')
                                 
 args = parser.parse_args()
@@ -62,7 +62,7 @@ model_load_path = {"agent": path,
 model_save_path = {"agent": path, 
                    "adversary":path}
 
-device = torch.device("cpu")  # torch.device("cuda:0") if torch.cuda.is_available() else 
+device = torch.device("cuda:1") if torch.cuda.is_available() else torch.device("cpu")  # 
 
 
 
