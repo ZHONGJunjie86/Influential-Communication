@@ -30,10 +30,9 @@ def step(rank, shared_data):
             
         for i in range(args.processes):
             agents = agents_process_dict[i]
-
-            if RENDER and episode % 10 == 0:
-                env.render()
-                time.sleep(0.1)
+            env = simple_tag_v2.parallel_env(num_good=args.num_good, num_adversaries=args.num_adversaries,
+                                 num_obstacles=args.num_obstacles, max_cycles=args.max_cycles, continuous_actions=False)
+            env.seed(seed = None)
 
             # reset
             for agent_name in agents:
@@ -52,6 +51,9 @@ def step(rank, shared_data):
                 agent_kl_dict[name] = {} 
                 com_reward_dict[name] = 0
             step = 0
+            if RENDER and episode % 10 == 0:
+                env.render()
+                time.sleep(0.1)
 
             for name in agent_name_list:
                 dones[name] = False
@@ -134,7 +136,7 @@ def step(rank, shared_data):
         shared_data.send(loss_dict_agent, loss_dict_adversary, send_process_data_dict)
 
         print("Episode ", episode, " over. lr: ", lr)
-        if episode % 10 == 0:
+        if episode % 15 == 0:
             agent_target.save_model(model_save_path, agents_net["agent"])
             adversary_target.save_model(model_save_path, agents_net["adversary"])
             if episode!= 0 and episode % 10 == 0 and lr>args.min_lr:

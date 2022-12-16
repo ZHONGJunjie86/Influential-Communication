@@ -133,7 +133,7 @@ def compute_com_reward(agent_name_list, agent_kl_dict, beta, com_dim):
             # sum_k p(j)
             sum_p = union_p.sum(dim=1,keepdim=True)
             # kl
-            kl_reward = kl_loss(sum_p, agent_kl_dict[other_name]["real_logits"])
+            kl_reward = kl_loss(agent_kl_dict[other_name]["real_logits"].log(),sum_p)
             influence_reward += beta * kl_reward
         com_reward_dict[agent_name] = influence_reward
     

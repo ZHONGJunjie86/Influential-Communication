@@ -155,7 +155,7 @@ class PPO():
             GAE_advantage.append(advatage) #插入列表
             target_value.append(float(value) + advatage)#)
             action_value_pre = reward + self.gamma*value_pre
-            value_pre = value # !
+            # value_pre = value # !
         
         # Normalizing the rewards:
         rewards = torch.tensor(rewards[::-1]).to(self.device).view(-1,1,1)
@@ -252,7 +252,7 @@ class PPO():
             self.old_com = self.old_com.view(-1,1,self.com_shape)
             self.target_value_com = self.target_value_com.view(-1,1,1)
             self.GAE_advantage_com = self.GAE_advantage_com.view(-1,1,1)
-            print()
+            
             
         batch_size = self.old_states.size()[0]
         for _ in range(self.K_epochs):

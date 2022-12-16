@@ -4,7 +4,7 @@ def process_run(rank, shared_data):
     wandb.init(
     project="Bi-Level-Actor-Critic-with-F", 
     entity="zhongjunjie",
-    group="IC 4 pro14"
+    group="IC 10 fixV' beta0.1 alpha0"
     )
     wandb.config = {
     "learning_rate": 0.0003,
