@@ -132,11 +132,15 @@ def step(rank, shared_data):
         
         # train 
         loss_dict_agent = agent_target.train_with_shared_data(agents_net["agent"], agents_optimizer["agent"])
+        # if episode % 10 == 0:
+        #     loss_dict_agent = agent_target.train_with_shared_data(agents_net["agent"], agents_optimizer["agent"])
+        # else:
+        #     loss_dict_agent = agent_target.loss_dic
         loss_dict_adversary = adversary_target.train_with_shared_data(agents_net["adversary"], agents_optimizer["adversary"])
         shared_data.send(loss_dict_agent, loss_dict_adversary, send_process_data_dict)
 
         print("Episode ", episode, " over. lr: ", lr)
-        if episode % 15 == 0:
+        if episode % 10 == 0:
             agent_target.save_model(model_save_path, agents_net["agent"])
             adversary_target.save_model(model_save_path, agents_net["adversary"])
             if episode!= 0 and episode % 10 == 0 and lr>args.min_lr:

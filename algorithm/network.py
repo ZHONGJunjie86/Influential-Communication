@@ -34,7 +34,7 @@ class ActorCritic(nn.Module):
         self.categorical_dis = torch.distributions.Categorical
 
         # critic        
-        self.linear_critic = nn.Linear(64, 1)
+        self.linear_critic = nn.Linear(64, action_dim)
 
         # communicate part
         if agent_type == "adversary":
@@ -43,7 +43,7 @@ class ActorCritic(nn.Module):
             self.linear_com = nn.Linear(self.com_dim, 30)
             self.linear_2 = nn.Linear(64 + 30, 64)
             self.linear_actor_com = nn.Linear(64, action_dim_com)
-            self.linear_critic_com = nn.Linear(64, 1)
+            self.linear_critic_com = nn.Linear(64, action_dim_com)
  
         self.initialize()
 
@@ -82,6 +82,8 @@ class ActorCritic(nn.Module):
 
         # critic
         value = self.linear_critic(x)
+        action_value = value.gather(-1, action.unsqueeze(1).long())
+        value = value.mean(-1, keepdim = True)
 
         # communicate part 
         if self.agent_type == "adversary":
@@ -124,14 +126,16 @@ class ActorCritic(nn.Module):
 
             # critic
             value_com = self.linear_critic_com(x)
+            action_value_com = value_com.gather(-1, action_com.unsqueeze(1).long())
+            value_com = value_com.mean(-1, keepdim = True)
 
             kl_dict["real_logits"] = logits            
 
             return value.reshape(batch_size,1,1), action,selected_log_prob, value_com.reshape(batch_size,1,1), action_com,\
-                selected_log_prob_com , h_state.detach().data, entropy, entropy_com, kl_dict
+                selected_log_prob_com , h_state.detach().data, entropy, entropy_com, kl_dict, action_value, action_value_com
         else:
             return value.reshape(batch_size,1,1), action,selected_log_prob, None, None,\
-                None, h_state.detach().data, entropy, None, None
+                None, h_state.detach().data, entropy, None, None, action_value, None
 
         # value, action, logprobs, value_com, action_com,\
             # logp_com, h_s, entropy, entropy_com, _

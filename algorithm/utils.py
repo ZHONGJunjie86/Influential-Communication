@@ -15,6 +15,7 @@ class Memory():
         self.logprobs_com = []
         self.values_com = []
         self.rewards_com = []
+        self.action_values_com = []
         self.com = []
     
     
@@ -35,4 +36,5 @@ class Memory():
         del self.logprobs_com [:]
         del self.values_com[:]
         del self.rewards_com[:]
+        del self.action_values_com[:]
         del self.com[:]
