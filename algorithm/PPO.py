@@ -158,7 +158,7 @@ class PPO():
             GAE_advantage.append(advatage) #插入列表
             target_value.append(float(value) + advatage)#)
             action_value_pre = action_value
-            value_pre = value # !
+            # value_pre = value # !
         
         # Normalizing the rewards:
         rewards = torch.tensor(rewards[::-1]).to(self.device).view(-1,1,1)
@@ -232,7 +232,7 @@ class PPO():
             GAE_advantage.append( advatage) #插入列表
             target_value.append(float(value) + advatage)#)
             action_value_pre = action_value
-            value_pre = value # !
+            # value_pre = value # !
         
         # Normalizing the rewards:
         rewards = torch.tensor(rewards[::-1]).to(self.device).view(-1,1,1)

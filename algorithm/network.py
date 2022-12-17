@@ -80,8 +80,9 @@ class ActorCritic(nn.Module):
                            x_com.reshape(batch_size, 1, 30)    
                             ], -1).view(batch_size, 1, -1)
             x = F.relu(self.linear_2(x))
-
-        x,h_state = self.gru(x, h_old.detach())
+            x,h_state = self.gru(x, h_old.detach())
+        else:
+            x,h_state = self.gru(x_before_rnn, h_old.detach())
         
         # actor
         logits = self.softmax(self.linear_actor(x))
@@ -102,8 +103,8 @@ class ActorCritic(nn.Module):
 
         # communicate part 
         if self.agent_type == "adversary":
+
             kl_dict = {}
-            
             # com part
             logits = self.softmax(self.linear_actor_com(x))
             dis =  self.categorical_dis_com(logits.reshape(batch_size, 1, self.action_dim_com))
