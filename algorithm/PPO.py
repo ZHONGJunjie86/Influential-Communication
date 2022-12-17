@@ -33,8 +33,8 @@ class PPO():
         self.com_shape = self.adversary_num
 
         # train
-        self.eps_clip = 0.1
-        self.vf_clip_param = 0.1
+        self.eps_clip = 0.2
+        self.vf_clip_param = 0.2
         self.lam = 0.95
         self.K_epochs = args.K_epochs
         self.old_value_1, self.old_value_2 = 0, 0
@@ -158,15 +158,14 @@ class PPO():
             GAE_advantage.append(advatage) #插入列表
             target_value.append(float(value) + advatage)#)
             action_value_pre = action_value
-            # value_pre = value # !
+            value_pre = value # !
         
         # Normalizing the rewards:
         rewards = torch.tensor(rewards[::-1]).to(self.device).view(-1,1,1)
         self.target_value = torch.tensor(target_value[::-1]).to(self.device).view(-1,1,1)
         self.GAE_advantage = torch.tensor(GAE_advantage[::-1]).to(self.device).view(-1,1,1)
         # self.advantages = GAE_advantage
-        #self.advantages[name] = (GAE_advantage- GAE_advantage.mean()) / (GAE_advantage.std() + 1e-6) 
-
+        
         if self.agent_type != "agent":
             self._compute_com_GAE()
 
@@ -233,66 +232,67 @@ class PPO():
             GAE_advantage.append( advatage) #插入列表
             target_value.append(float(value) + advatage)#)
             action_value_pre = action_value
-            # value_pre = value # !
+            value_pre = value # !
         
         # Normalizing the rewards:
         rewards = torch.tensor(rewards[::-1]).to(self.device).view(-1,1,1)
         self.target_value_com = torch.tensor(target_value[::-1]).to(self.device).view(-1,1,1)
         self.GAE_advantage_com = torch.tensor(GAE_advantage[::-1]).to(self.device).view(-1,1,1)
         # self.advantages = GAE_advantage
-        #self.advantages[name] = (GAE_advantage- GAE_advantage.mean()) / (GAE_advantage.std() + 1e-6) 
 
 
     def train_with_shared_data(self, actor, actor_optmizer):
-        self.old_states = self.old_states.view(-1,1,self.obs_shape)
-        self.old_hidden_states = self.old_hidden_states.view(1, -1, self.hidden_size) # 
-        self.old_actions = self.old_actions.view(-1,1,1)
-        self.old_logprobs = self.old_logprobs.view(-1,1,1)
-        self.old_values = self.old_values.view(-1,1,1)
-        self.old_action_values = self.old_action_values.view(-1,1,1)
-        self.target_value = self.target_value.view(-1,1,1)
-        self.GAE_advantage = self.GAE_advantage.view(-1,1,1)
-        self.GAE_advantage = (self.GAE_advantage - self.GAE_advantage.mean()) / (self.GAE_advantage.std() + 1e-6) 
-            
-        if self.agent_type != "agent":
-            self.old_actions_com = self.old_actions_com.view(-1,1,1)
-            self.old_logprobs_com = self.old_logprobs_com.view(-1,1,1)
-            self.old_com = self.old_com.view(-1,1,self.com_shape)
-            self.target_value_com = self.target_value_com.view(-1,1,1)
-            self.old_values_com = self.old_values_com.view(-1,1,1)
-            self.old_action_values_com = self.old_action_values_com.view(-1,1,1)
-            self.GAE_advantage_com = self.GAE_advantage_com.view(-1,1,1)
-            self.GAE_advantage_com = (self.GAE_advantage_com - self.GAE_advantage_com.mean()) / (self.GAE_advantage_com.std() + 1e-6) 
-            
+        with torch.no_grad():
+            self.old_states = self.old_states.view(-1,1,self.obs_shape)
+            self.old_hidden_states = self.old_hidden_states.view(1, -1, self.hidden_size) # 
+            self.old_actions = self.old_actions.view(-1,1,1)
+            self.old_logprobs = self.old_logprobs.view(-1,1,1)
+            self.old_values = self.old_values.view(-1,1,1)
+            self.old_action_values = self.old_action_values.view(-1,1,1)
+            self.target_value = self.target_value.view(-1,1,1)
+            self.GAE_advantage = self.GAE_advantage.view(-1,1,1)
+            self.GAE_advantage = (self.GAE_advantage - self.GAE_advantage.mean()) / (self.GAE_advantage.std() + 1e-6) 
+                
+            if self.agent_type != "agent":
+                self.old_actions_com = self.old_actions_com.view(-1,1,1)
+                self.old_logprobs_com = self.old_logprobs_com.view(-1,1,1)
+                self.old_com = self.old_com.view(-1,1,self.com_shape)
+                self.target_value_com = self.target_value_com.view(-1,1,1)
+                self.old_values_com = self.old_values_com.view(-1,1,1)
+                self.old_action_values_com = self.old_action_values_com.view(-1,1,1)
+                self.GAE_advantage_com = self.GAE_advantage_com.view(-1,1,1)
+                self.GAE_advantage_com = (self.GAE_advantage_com - self.GAE_advantage_com.mean()) / (self.GAE_advantage_com.std() + 1e-6) 
+                
             
         batch_size = self.old_states.size()[0]
         for _ in range(self.K_epochs):
             batch_sample = batch_size # int(batch_size / self.K_epochs) # 
             # indices = torch.randint(batch_size, size=(batch_sample,), requires_grad=False)
-            old_states = self.old_states#[indices]
+            with torch.no_grad():
+                old_states = self.old_states#[indices]
 
-            old_hidden = self.old_hidden_states#.reshape(-1,1,self.hidden_size)[indices].view(1, -1, self.hidden_size)
-            old_logprobs = self.old_logprobs# [indices]
-            advantages = self.GAE_advantage#[indices].detach()
-            target_value = self.target_value#[indices]
-            old_value = self.old_values
-            old_action_value = self.old_action_values
-            old_actions = self.old_actions
+                old_hidden = self.old_hidden_states#.reshape(-1,1,self.hidden_size)[indices].view(1, -1, self.hidden_size)
+                old_logprobs = self.old_logprobs# [indices]
+                advantages = self.GAE_advantage#[indices].detach()
+                target_value = self.target_value#[indices]
+                old_value = self.old_values
+                old_action_value = self.old_action_values
+                old_actions = self.old_actions
 
-            if self.agent_type != "agent":
-                old_com = self.old_com
-                old_actions_com = self.old_actions_com
-                old_logprobs_com = self.old_logprobs_com
-                target_value_com = self.target_value_com
-                GAE_advantage_com = self.GAE_advantage_com
-                old_value_com = self.old_values_com
-                old_action_value_com = self.old_action_values_com
-            else:
-                old_com = None
-                old_actions_com = None
-                old_logprobs_com = None
-                target_value_com = None
-                GAE_advantage_com = None
+                if self.agent_type != "agent":
+                    old_com = self.old_com
+                    old_actions_com = self.old_actions_com
+                    old_logprobs_com = self.old_logprobs_com
+                    target_value_com = self.target_value_com
+                    GAE_advantage_com = self.GAE_advantage_com
+                    old_value_com = self.old_values_com
+                    old_action_value_com = self.old_action_values_com
+                else:
+                    old_com = None
+                    old_actions_com = None
+                    old_logprobs_com = None
+                    target_value_com = None
+                    GAE_advantage_com = None
 
             
             value, action, logprobs, value_com, action_com,\

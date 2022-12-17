@@ -1,7 +1,7 @@
 import wandb
 
 def process_run(rank, shared_data):
-    exp_name = "IC 18 fixV' a0.0 b1. per10 "
+    exp_name = "IC 17 realV' a1.0 b1. per10 "
     wandb.init(
     project="Bi-Level-Actor-Critic-with-F", 
     entity="zhongjunjie",

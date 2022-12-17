@@ -38,10 +38,11 @@ class ActorCritic(nn.Module):
 
         # communicate part
         if agent_type == "adversary":
-            self.categorical_dis_com = torch.distributions.Categorical
-            self.kl_loss = nn.KLDivLoss(reduction="batchmean")
             self.linear_com = nn.Linear(self.com_dim, 30)
             self.linear_2 = nn.Linear(64 + 30, 64)
+
+            self.categorical_dis_com = torch.distributions.Categorical
+            self.kl_loss = nn.KLDivLoss(reduction="batchmean")
             self.linear_actor_com = nn.Linear(64, action_dim_com)
             self.linear_critic_com = nn.Linear(64, action_dim_com)
  
@@ -65,9 +66,22 @@ class ActorCritic(nn.Module):
             
         x = F.relu(self.linear1(obs)) # .float()
         x = x.view(batch_size, 1, -1)
-        x = self.self_attention(x,x,x)[0] + x
+        x_before_rnn = self.self_attention(x,x,x)[0] + x
+
+        if self.agent_type == "adversary":
+            # real
+            if old_actions_com == None:
+                com = torch.Tensor(obs_com).to(self.device)
+            else:
+                com = obs_com
+            com = com.view(batch_size, 1, self.com_dim)
+            x_com = F.relu(self.linear_com(com/10))
+            x = torch.cat([x_before_rnn.view(batch_size, 1, -1), 
+                           x_com.reshape(batch_size, 1, 30)    
+                            ], -1).view(batch_size, 1, -1)
+            x = F.relu(self.linear_2(x))
+
         x,h_state = self.gru(x, h_old.detach())
-        
         
         # actor
         logits = self.softmax(self.linear_actor(x))
@@ -85,36 +99,12 @@ class ActorCritic(nn.Module):
         action_value = value.gather(-1, action.unsqueeze(1).long())
         value = value.mean(-1, keepdim = True)
 
+
         # communicate part 
         if self.agent_type == "adversary":
-
-            # contrafactual
             kl_dict = {}
-            if old_actions_com == None:
-                # obs_com: list
-                for i in range(len(obs_com)):
-                    com = copy.deepcopy(obs_com)
-                    com = torch.Tensor(com).reshape(1,1,self.com_dim).to(self.device)
-                    com = com.repeat(1,self.action_dim_com,1)
-                    x_com = torch.cat([com[:,:,:i], self.all_action_com, com[:,:,i+1:]],2)
-                    x_com = F.relu(self.linear_com(x_com/10))
-                    x_com = torch.cat([x.view(batch_size, 1, -1).repeat(1,self.action_dim_com,1), 
-                                      x_com.reshape(batch_size, self.action_dim_com, 30)   
-                                      ], -1).view(batch_size, self.action_dim_com, -1)
-                    x_com = F.relu(self.linear_2(x_com))
-                    logits = self.softmax(self.linear_actor_com(x_com))
-                    kl_dict[i] = logits
-
             
-            # real
-            if old_actions_com == None:
-                obs_com = torch.Tensor(obs_com).to(self.device)
-            obs_com = obs_com.view(batch_size, 1, self.com_dim)
-            x_com = F.relu(self.linear_com(obs_com/10))
-            x = torch.cat([x.view(batch_size, 1, -1), 
-                           x_com.reshape(batch_size, 1, 30)    
-                            ], -1).view(batch_size, 1, -1)
-            x = F.relu(self.linear_2(x))
+            # com part
             logits = self.softmax(self.linear_actor_com(x))
             dis =  self.categorical_dis_com(logits.reshape(batch_size, 1, self.action_dim_com))
             if old_actions_com != None:
@@ -131,11 +121,30 @@ class ActorCritic(nn.Module):
 
             kl_dict["real_logits"] = logits            
 
+
+            # contrafactual
+            if old_actions_com == None:
+                # obs_com: list
+                for i in range(len(obs_com)):
+                    com = copy.deepcopy(obs_com)
+                    com = torch.Tensor(com).reshape(1,1,self.com_dim).to(self.device)
+                    com = com.repeat(1,self.action_dim_com,1)
+                    x_com = torch.cat([com[:,:,:i], self.all_action_com, com[:,:,i+1:]],2)
+                    x_com = F.relu(self.linear_com(x_com/10))
+                    x = torch.cat([x_before_rnn.view(batch_size, 1, -1).repeat(1,self.action_dim_com,1), 
+                                      x_com.reshape(batch_size, self.action_dim_com, 30)   
+                                      ], -1).view(batch_size, self.action_dim_com, -1)
+                    x = F.relu(self.linear_2(x))
+                    x,_ = self.gru(x, h_old.detach())
+
+                    logits = self.softmax(self.linear_actor_com(x))
+                    kl_dict[i] = logits
+
             return value.reshape(batch_size,1,1), action,selected_log_prob, value_com.reshape(batch_size,1,1), action_com,\
-                selected_log_prob_com , h_state.detach().data, entropy, entropy_com, kl_dict, action_value, action_value_com
+                selected_log_prob_com , h_state.detach().data, entropy, entropy_com, kl_dict, action_value.reshape(batch_size,1,1), action_value_com.reshape(batch_size,1,1)
         else:
             return value.reshape(batch_size,1,1), action,selected_log_prob, None, None,\
-                None, h_state.detach().data, entropy, None, None, action_value, None
+                None, h_state.detach().data, entropy, None, None, action_value.reshape(batch_size,1,1), None
 
         # value, action, logprobs, value_com, action_com,\
             # logp_com, h_s, entropy, entropy_com, _
