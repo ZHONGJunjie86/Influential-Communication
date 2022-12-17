@@ -105,6 +105,7 @@ def collect_data(target, source, agent_type):
     target.old_actions = torch.cat((target.old_actions, source.old_actions), dim = 0) 
     target.old_logprobs = torch.cat((target.old_logprobs, source.old_logprobs), dim = 0) 
     target.old_values = torch.cat((target.old_values, source.old_values), dim = 0) 
+    target.old_action_values = torch.cat((target.old_action_values, source.old_action_values), dim = 0) 
     target.target_value = torch.cat((target.target_value, source.target_value), dim = 0) 
     target.GAE_advantage = torch.cat((target.GAE_advantage, source.GAE_advantage), dim = 0) 
         
@@ -115,6 +116,7 @@ def collect_data(target, source, agent_type):
         target.GAE_advantage_com = torch.cat((target.GAE_advantage_com, source.GAE_advantage_com), dim = 0) 
         target.old_com = torch.cat((target.old_com, source.old_com), dim = 0) 
         target.old_values_com = torch.cat((target.old_values_com, source.old_values_com), dim = 0) 
+        target.old_action_values_com = torch.cat((target.old_action_values_com, source.old_action_values_com), dim = 0) 
 
 def compute_com_reward(agent_name_list, agent_kl_dict, beta, com_dim):
     com_reward_dict = {}
