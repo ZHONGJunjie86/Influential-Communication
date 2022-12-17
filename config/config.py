@@ -38,7 +38,7 @@ parser.add_argument("--K_epochs", default=4, type=int)
 parser.add_argument("--clip", default=0.2, type=float)
 
 # Multiprocessing
-parser.add_argument('--processes', default=2, type=int,
+parser.add_argument('--processes', default=14, type=int,
                     help='number of processes to train with')
                                 
 args = parser.parse_args()

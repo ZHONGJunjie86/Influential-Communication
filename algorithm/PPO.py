@@ -147,8 +147,6 @@ class PPO():
             adv_upgo = g_t - value
             g_t_pre = g_t
 
-            if (adv_gae > 0 and adv_upgo<0) or (adv_gae<0 and adv_upgo>0):
-                adv_upgo = 0.999*adv_upgo
             
             if self.use_gae:
                 advatage = adv_gae 
@@ -194,7 +192,7 @@ class PPO():
         target_value = []  
         #
         discounted_reward = self.memory.values_com[-1] 
-        action_value_pre = self.memory.action_values[-1]
+        action_value_pre = self.memory.action_values_com[-1]
         value_pre = self.memory.values_com[-1]
         advatage = action_value_pre - value_pre
         adv_gae = action_value_pre - value_pre
@@ -222,8 +220,6 @@ class PPO():
             adv_upgo = g_t - value
             g_t_pre = g_t
 
-            if (adv_gae > 0 and adv_upgo<0) or (adv_gae<0 and adv_upgo>0):
-                adv_upgo = 0.999*adv_upgo
             
             if self.use_gae:
                 advatage = adv_gae 
